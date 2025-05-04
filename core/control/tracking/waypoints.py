@@ -143,7 +143,7 @@ class WaypointProcessor:
         observation['prev_waypoints'] = self.prev_waypoints.copy()
         observation['waypoints'] = self.local_waypoints.copy()
         observation['state'] = ego_state.copy()
-        observation['done'] = (len(self.waypoints) - self.current_waypoint_index) <= 20 if self.auto_stop else False
+        observation['done'] = (len(self.waypoints) - self.current_waypoint_index) <= 20 # if self.auto_stop else False
         return observation
 
     def execute(self, ego_state: np.ndarray, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:

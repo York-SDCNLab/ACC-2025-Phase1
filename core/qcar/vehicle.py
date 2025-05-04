@@ -126,7 +126,7 @@ class PhysicalCar(BaseCar):
         """
         # if halt_time >= 3:
         #     self.leds: np.ndarray = np.concatenate((self.leds[:6], [1, 1]))
-        self.running_gear.read_write_std(throttle=-0.01, steering=steering, LEDs=self.leds)
+        self.running_gear.read_write_std(throttle=-0.0, steering=steering, LEDs=self.leds)
         time.sleep(halt_time)
         # self.leds = np.concatenate((self.leds[:6], [0, 0]))
         # self.running_gear.read_write_std(throttle=0, steering=steering, LEDs=self.leds)

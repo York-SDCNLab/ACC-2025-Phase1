@@ -85,9 +85,8 @@ class MultiEncoder(nn.Module):
         if self.vector_encoder:
             T, B, _ = obs["state"].shape
 
-            state = torch.tensor([2.182, -0.087, 1.57, 0.0, 0.0], device = obs["state"].device)
-            #embed_vecobs = self.vector_encoder(obs["state"][..., :5].to(torch.float32))
-            embed_vecobs = self.vector_encoder.forward(state[None, None])
+            #state = torch.tensor([2.182, -0.087, 1.57, 0.0, 0.0], device = obs["state"].device)
+            embed_vecobs = self.vector_encoder(obs["state"][..., :5].to(torch.float32))
             embeds.append(embed_vecobs)
 
             #duration_vecobs = self.duration_encoder(obs["fsm_duration"].to(torch.float32))
