@@ -72,7 +72,7 @@ class Actuator(PhysicalCar):
             self.pid_steering.kp = 2.5
         else:
             if abs(psi - traj_ref_3) <= 0.05:
-                lai, pwm, desired_vel = 54, 0.14, 1.5
+                lai, pwm, desired_vel = 54, 0.14, 1.4
                 self.pid_steering.kp = 2.4
             else:
                 lai, pwm, desired_vel = 52, 0.09, 1.0 # 0.08
@@ -88,7 +88,7 @@ class Actuator(PhysicalCar):
         # print("Lateral error: ", lateral)
         # print(dt)
 
-        if abs(lateral) >= 0.045: #and self.init_flag:
+        if abs(lateral) >= 0.05: #and self.init_flag:
             # if self.init_flag:
             action, _ = self.pure_pursuit.execute(obs)
             steering: float = action[1] * 0.5
@@ -107,7 +107,7 @@ class Actuator(PhysicalCar):
         if obs["stop"]:
             desired_vel = 0.0
 
-        pwm = (desired_vel - observed_vel)*0.25
+        pwm = (desired_vel - observed_vel) * 0.25
 
         #self.handle_leds(pwm, steering)   
         self.led_strip.writeColors(self.strip_color, 33)     
