@@ -6,7 +6,8 @@ You can view the performance of our solution [here](TODO)
 # Installation
 pip install -r requirements.txt
 
-To run our perception pipeline, you will need to download the model weights [here](TODO)
+To run our perception pipeline, you will need to download the model weights [here](https://yuoffice-my.sharepoint.com/:u:/g/personal/hunterls_yorku_ca/EQpNHLK2sRlMh60c1uHSd0IB7_I-RnMmKLUDGat5fBDVKA?email=studentcompetition%40Quanser.com&e=8xn8dn) \
+Only studentcompetition@Quanser.com has been granted access to these model weights, please let us know if you cannot download them.
 
 # Running the Solution
 Once all dependencies are installed, run ```Setup_Real_Scenario.py``` in one terminal and ```python scripts/angle_diff_demo.py``` 
