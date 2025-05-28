@@ -4,6 +4,9 @@ import numpy as np
 
 MAX_LOOKAHEAD_INDICES: int = 200
 
+def is_in_area_aabb(state: np.ndarray, area_box: Dict[str, float]) -> bool:
+    return area_box["min_x"] <= state[0] <= area_box["max_x"] and area_box["min_y"] <= state[1] <= area_box["max_y"]
+
 
 class WaypointProcessor:
     """
@@ -43,6 +46,7 @@ class WaypointProcessor:
         self.norm_dist: np.ndarray = None
         self.auto_stop: bool = auto_stop
         self.correction: float = np.pi if use_optitrack else 0 # we will not use lidar
+        self.destination_area: Dict[str, float] = None
 
     def setup(
         self,
@@ -141,9 +145,10 @@ class WaypointProcessor:
         """
         observation['next_waypoints'] = self.next_waypoints.copy()
         observation['prev_waypoints'] = self.prev_waypoints.copy()
+        observation['global_waypoints'] = self.global_waypoints.copy()
         observation['waypoints'] = self.local_waypoints.copy()
         observation['state'] = ego_state.copy()
-        observation['done'] = (len(self.waypoints) - self.current_waypoint_index) <= 20 if self.auto_stop else False
+        observation['done'] = is_in_area_aabb(ego_state, self.destination_area) if self.current_waypoint_index > 100 and self.auto_stop else False
         return observation
 
     def execute(self, ego_state: np.ndarray, observation: Dict[str, np.ndarray]) -> Dict[str, np.ndarray]:
@@ -163,6 +168,14 @@ class WaypointProcessor:
             orig, _, rot = self.cal_vehicle_state(ego_state)
             self.cal_local_waypoints(orig, rot)
             return self.handle_observation(ego_state, observation)
+        
+    def set_destination(self, destination: np.ndarray) -> None:
+        self.destination_area = {
+            'max_x': destination[0] + 0.2,
+            'min_x': destination[0] - 0.2,
+            'max_y': destination[1] + 0.2,
+            'min_y': destination[1] - 0.2,
+        }
 
     reset = setup
     step = execute

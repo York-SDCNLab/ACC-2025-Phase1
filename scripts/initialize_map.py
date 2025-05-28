@@ -1,6 +1,5 @@
 import sys
 sys.path.insert(0, sys.path[0] + "/..")
-raise Exception("This script is deprecated and will be removed in a future release. Please use the new scripts in the scripts folder.")
 
 import numpy as np
 

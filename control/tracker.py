@@ -22,14 +22,22 @@ class PathTracker:
     def __init__(self) -> None:
         self.gps: LidarSLAM = LidarSLAM() # slam system
         self.processor: WaypointProcessor = WaypointProcessor(
-            # max_lookahead_indices=50,
+            auto_stop=True
         )
         self.roadmap: ACCRoadMap = ACCRoadMap()
         self.last_state: np.ndarray = np.zeros(6)
 
-    def reset(self, node_sequence: List[int]) -> Dict[str, Any]:
+    def reset(self, node_sequence_1: List[int], node_sequence_2: List[int] = None) -> Dict[str, Any]:
         # Generate the total trajectory
-        waypoints: np.ndarray = self.roadmap.generate_path(node_sequence)
+        if node_sequence_2 is None:
+            waypoints: np.ndarray = self.roadmap.generate_path(node_sequence_1)
+            self.processor.set_destination(waypoints[-1])
+        else:
+            waypoints_1: np.ndarray = self.roadmap.generate_path(node_sequence_1)
+            waypoints_2: np.ndarray = self.roadmap.generate_path(node_sequence_2)
+            waypoints: np.ndarray = np.concatenate((waypoints_1, waypoints_2[:100]), axis=0)
+            self.processor.set_destination(waypoints_1[-1])
+
         # Get the initial state
         for _ in range(5):
             self.last_state = self.__get_current_state()
@@ -45,7 +53,8 @@ class PathTracker:
         current_state: np.ndarray = self.__get_current_state()
         if not np.array_equal(current_state[:3], self.last_state[:3]):
             self.last_state = current_state
-        obs: Dict[str, Any] = self.processor.step(self.last_state, {})
+        obs: Dict[str, Any] = self.processor.step(self.last_state, {'stop': False})
+
         return obs
 
     def terminate(self) -> None:

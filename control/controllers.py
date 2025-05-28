@@ -62,3 +62,31 @@ class SpeedController:
         error_derivative: float = (error - self.error_prev) / dt
         pwm: float = self.k_p * error + self.k_i * self.error_integrate + self.k_d * error_derivative
         return np.clip(pwm, -self.max_pwm, self.max_pwm)
+
+
+class SteeringController2:
+    def __init__(self) -> None:
+        self.max_steering: float = np.pi / 6
+        self.k_p: float = 0
+        self.k_i: float = 0
+        self.k_d: float = 0
+
+        self.error_integrate: float = 0
+        self.error_prev: float = 0
+
+    def reset(self, k_p: float = 0.1, k_i: float = 0.5, k_d: float = 0.0) -> None:
+        self.k_p = k_p
+        self.k_i = k_i
+        self.k_d = k_d
+        self.start: float = time.perf_counter()
+
+    def step(self, obs: dict, dt: float) -> float:
+        lateral_offset: float = obs['lateral_offset']
+        psi, psi_ref = obs['psi'], obs['psi_ref']
+        vel: float = obs['state'][3]
+
+        angle_diff: float = (psi_ref - psi + np.pi) % (2 * np.pi) - np.pi
+        # print("Lateral offset: ", lateral_offset, "vel", vel)
+
+        steering: float = self.k_p * lateral_offset + self.k_d * angle_diff + self.k_i * (lateral_offset * vel * dt)
+        return np.clip(steering, -self.max_steering, self.max_steering)

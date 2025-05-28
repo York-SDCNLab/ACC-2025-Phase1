@@ -1,5 +1,6 @@
 import sys
 import time
+import traceback
 import warnings
 warnings.warn("This is just a prototype")
 sys.path.insert(0, sys.path[0] + "/..")
@@ -39,17 +40,23 @@ class Agent:
         self.tracker: PathTracker = PathTracker()
         self.actuator: Actuator = Actuator()
         self.predicted_state: int = 0
-        self.halt_signal: bool = False       
+        self.last_state: int = 0
+        self.halt_signal: bool = False  
+        self.halt_timer: float = None     
 
-    def reset(self, node_sequence: List[int]) -> None:
-        obs: Dict[str, Any] = self.tracker.reset(node_sequence)
+    def reset(self, node_sequence_1: List[int], node_sequence_2: List[int] = None) -> None:
+        if node_sequence_2 is None:
+            obs: Dict[str, Any] = self.tracker.reset(node_sequence_1)
+        else:
+            obs: Dict[str, Any] = self.tracker.reset(node_sequence_1, node_sequence_2)
         self.model_state: tuple = self.perception.init_state()
         self.action: np.ndarray = self.actuator.reset()
         self.filter = QCarEKF(obs['state'][:3])
         self.last_filter_update: float = time.perf_counter()
         self.state = obs['state']
+        obs['done'] = False
 
-    def step(self) -> None:
+    def step(self) -> Dict[str, Any]:
         start: float = time.perf_counter()
 
         obs: Dict[str, Any] = self.tracker.step()
@@ -74,7 +81,7 @@ class Agent:
             print(f"Halt signal: {self.halt_signal}, predicted state: {self.predicted_state}")
 
         # TODO: Temp way for the state machine
-        self.halt_signal = False
+        # self.halt_signal = False
         if self.halt_signal:
             if self.predicted_state == 1: # Stop sign
                 self.actuator.halt_car(self.action[1], 3)
@@ -85,7 +92,11 @@ class Agent:
             self.action = self.actuator.step(obs)
 
         end: float = time.perf_counter() - start
-        # time.sleep(max(0, 0.2 - end))
+            
+        self.action = self.actuator.step(obs)
+        end: float = time.perf_counter() - start
+
+        return obs
 
     def terminate(self) -> None:
         self.actuator.halt_car()
@@ -93,16 +104,35 @@ class Agent:
         self.camera.terminate()
         self.tracker.terminate()
 
+
 if __name__ == '__main__':
     agent: Agent = Agent()
-    # agent.reset([10, 1, 13, 17, 15, 6, 8] * 20) # Change the route here
-    # agent.reset([10, 2, 4, 14, 22] * 20) # Change the route here
-    agent.reset([10, 1, 17, 20, 22, 9, 7, 3, 1, 8] * 20) # Change the route here
+    routes = [
+        [10, 20], [20, 9], 
+        [9, 17], [17, 3], 
+        [3, 22], [22, 5]
+    ]
+
     try:
-        while True:
-            agent.step()
+        for i in range(len(routes)):
+            if i == len(routes) - 1:
+                agent.reset(routes[i]) 
+            else:
+                agent.reset(routes[i], routes[i+1]) 
+
+            print(f"Route {i+1}: {routes[i][0]} -> {routes[i][1]}")
+            start: float = time.perf_counter()
+            lateral_offsets: List[float] = []
+            while True:
+                obs = agent.step()
+                if obs['done']:
+                    break
+            time_elapsed: float = time.perf_counter() - start
+            print(f"Time elapsed: {time_elapsed:.2f}s")
     except KeyboardInterrupt:
         print("KeyboardInterrupt")
-        # following: np.ndarray = agent.tracker.get_tracking()
-        # plot_trajectory([np.array(agent.local_history), following])
+    except Exception as e:
+        traceback.print_exc()
+        print(f"Exception: {e}")
+    finally:
         agent.terminate()
